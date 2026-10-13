@@ -1,80 +1,199 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "../App.css";
 
 function BrowseProjects() {
+
+  const [projects, setProjects] = useState([]);
+  const [message, setMessage] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [skill, setSkill] = useState("");
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+
+    try {
+
+      const response = await fetch(
+        "http://localhost:5000/api/projects"
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage("Failed to load projects.");
+        return;
+      }
+
+      const openProjects = data.filter(
+        (project) => project.status === "Open"
+      );
+
+      setProjects(openProjects);
+
+    } catch (error) {
+
+      setMessage("Unable to connect to the server.");
+
+    }
+  };
+
+
+  // Search and filter
+  const filteredProjects = projects.filter((project) => {
+
+    const searchMatch =
+      project.title
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      project.description
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+    const skillMatch =
+      skill === "" ||
+      project.skills
+        .toLowerCase()
+        .includes(skill.toLowerCase());
+
+    return searchMatch && skillMatch;
+  });
+
+
   return (
     <div className="dashboard-page">
 
       <div className="dashboard-header">
+
         <div>
           <h1>Browse Projects</h1>
-          <p>Find projects that match your skills.</p>
+
+          <p>
+            Find projects that match your skills.
+          </p>
         </div>
+
       </div>
+
+
+      {message && (
+        <p className="auth-message">
+          {message}
+        </p>
+      )}
+
+
+      {/* Search and Filter */}
+
+      <div className="project-details-box">
+
+        <h2>Find Projects</h2>
+
+        <div className="project-info">
+
+          <div>
+
+            <h3>Search</h3>
+
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+            />
+
+          </div>
+
+
+          <div>
+
+            <h3>Skill</h3>
+
+            <input
+              type="text"
+              placeholder="Example: React"
+              value={skill}
+              onChange={(e) =>
+                setSkill(e.target.value)
+              }
+            />
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* Project List */}
 
       <div className="project-list">
 
-        <div className="project-card">
-          <div>
-            <h3>React Website Development</h3>
+        {filteredProjects.length === 0 ? (
 
-            <p>
-              Looking for a React developer to build a responsive business website.
-            </p>
+          <p>
+            No matching projects found.
+          </p>
 
-            <span>Skills: React, JavaScript, CSS</span>
-            <br />
-            <span>Budget: ₹25,000</span>
-            <br />
-            <span>Deadline: 30 September 2026</span>
-          </div>
+        ) : (
 
-          <Link to="/project-details" className="primary-btn">
-  View Details
-</Link>
-        </div>
+          filteredProjects.map((project) => (
+
+            <div
+              className="project-card"
+              key={project._id}
+            >
+
+              <div>
+
+                <h3>
+                  {project.title}
+                </h3>
+
+                <p>
+                  {project.description}
+                </p>
+
+                <span>
+                  Skills: {project.skills}
+                </span>
+
+                <br />
+
+                <span>
+                  Budget: ₹{project.budget}
+                </span>
+
+                <br />
+
+                <span>
+                  Deadline:{" "}
+                  {new Date(
+                    project.deadline
+                  ).toLocaleDateString("en-GB")}
+                </span>
+
+              </div>
 
 
-        <div className="project-card">
-          <div>
-            <h3>Python Data Analysis</h3>
+              <Link
+                to={`/project-details/${project._id}`}
+                className="primary-btn"
+              >
+                View Details
+              </Link>
 
-            <p>
-              Need a freelancer to analyze a business dataset and create visualizations.
-            </p>
+            </div>
 
-            <span>Skills: Python, Pandas, Data Analysis</span>
-            <br />
-            <span>Budget: ₹15,000</span>
-            <br />
-            <span>Deadline: 5 October 2026</span>
-          </div>
+          ))
 
-          <Link to="/project-details" className="primary-btn">
-  View Details
-</Link>
-        </div>
-
-
-        <div className="project-card">
-          <div>
-            <h3>Mobile App UI/UX Design</h3>
-
-            <p>
-              Looking for a designer to create clean and user-friendly mobile app screens.
-            </p>
-
-            <span>Skills: Figma, UI/UX, Prototyping</span>
-            <br />
-            <span>Budget: ₹18,000</span>
-            <br />
-            <span>Deadline: 10 October 2026</span>
-          </div>
-
-          <Link to="/project-details" className="primary-btn">
-  View Details
-</Link>
-        </div>
+        )}
 
       </div>
 

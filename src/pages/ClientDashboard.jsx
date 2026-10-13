@@ -1,116 +1,190 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import DashboardNavbar from "../components/DashboardNavbar";
 import "../App.css";
 
 function ClientDashboard() {
+
+  const [projects, setProjects] = useState([]);
+  const [proposalCount, setProposalCount] = useState(0);
+
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  useEffect(() => {
+    fetchProjects();
+    fetchProposalCount();
+  }, []);
+
+  const fetchProjects = async () => {
+
+    try {
+
+      const response = await fetch(
+        "http://localhost:5000/api/projects"
+      );
+
+      const data = await response.json();
+
+      const myProjects = data.filter(
+        (project) =>
+          project.client &&
+          project.client._id === user.id
+      );
+
+      setProjects(myProjects);
+
+    } catch (error) {
+
+      console.log("Error fetching projects:", error);
+
+    }
+  };
+
+  const fetchProposalCount = async () => {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/proposals/client/${user.id}`
+    );
+
+    const data = await response.json();
+
+    setProposalCount(data.count);
+
+  } catch (error) {
+    console.log("Error fetching proposals:", error);
+  }
+};
+
+  const activeProjects = projects.filter(
+    (project) => project.status === "In Progress"
+  ).length;
+
+  const completedProjects = projects.filter(
+    (project) => project.status === "Completed"
+  ).length;
+
   return (
-    <div className="dashboard-page">
+    <div>
 
-      {/* Header */}
-      <div className="dashboard-header">
-        <div>
-          <h1>Welcome, Client!</h1>
-          <p>Manage your projects and find skilled freelancers.</p>
-        </div>
+      <DashboardNavbar role="client" />
 
-        <Link to="#" className="primary-btn">
-          + Post New Project
-        </Link>
-      </div>
+      <div className="dashboard-page">
 
+        {/* Header */}
 
-      {/* Statistics */}
-      <div className="stats-container">
+        <div className="dashboard-header">
 
-        <div className="stat-card">
-          <h2>3</h2>
-          <p>My Projects</p>
-        </div>
+          <div>
 
-        <div className="stat-card">
-          <h2>2</h2>
-          <p>Active Projects</p>
-        </div>
+            <h1>
+              Welcome, {user?.name}!
+            </h1>
 
-        <div className="stat-card">
-          <h2>8</h2>
-          <p>Proposals</p>
-        </div>
+            <p>
+              Manage your projects and find skilled freelancers.
+            </p>
 
-        <div className="stat-card">
-          <h2>1</h2>
-          <p>Completed</p>
-        </div>
+          </div>
 
-      </div>
-
-
-      {/* Projects */}
-      <div className="projects-section">
-
-        <div className="section-heading">
-          <h2>My Projects</h2>
-
-          <Link to="#">
-            View All
+          <Link
+            to="/post-project"
+            className="primary-btn"
+          >
+            + Post New Project
           </Link>
+
         </div>
 
 
-        <div className="project-list">
+        {/* Stats */}
 
-          <div className="project-card">
+        <div className="stats-container">
 
-            <div>
-              <h3>Website Development</h3>
+          <div className="stat-card">
+            <h2>{projects.length}</h2>
+            <p>My Projects</p>
+          </div>
 
-              <p>
-                Need a responsive website for a small business.
-              </p>
+          <div className="stat-card">
+            <h2>{activeProjects}</h2>
+            <p>Active Projects</p>
+          </div>
 
-              <span>Budget: ₹25,000</span>
-            </div>
+          <div className="stat-card">
+            <h2>{proposalCount}</h2>
+            <p>Proposals</p>
+          </div>
 
-            <div className="project-status active">
-              In Progress
-            </div>
+          <div className="stat-card">
+            <h2>{completedProjects}</h2>
+            <p>Completed</p>
+          </div>
+
+        </div>
+
+
+        {/* My Projects */}
+
+        <div className="projects-section">
+
+          <div className="section-heading">
+
+            <h2>My Projects</h2>
+
+            <Link to="/my-projects">
+              View All
+            </Link>
 
           </div>
 
 
-          <div className="project-card">
+          <div className="project-list">
 
-            <div>
-              <h3>Mobile App Design</h3>
+            {projects.length === 0 ? (
 
-              <p>
-                Looking for a UI/UX designer for a mobile application.
-              </p>
+              <p>No projects created yet.</p>
 
-              <span>Budget: ₹15,000</span>
-            </div>
+            ) : (
 
-            <div className="project-status open">
-              Open
-            </div>
+              projects.slice(0, 3).map((project) => (
 
-          </div>
+                <div
+                  className="project-card"
+                  key={project._id}
+                >
+
+                  <div>
+
+                    <h3>{project.title}</h3>
+
+                    <p>
+                      {project.description}
+                    </p>
+
+                    <span>
+                      Budget: ₹{project.budget}
+                    </span>
+
+                  </div>
 
 
-          <div className="project-card">
+                  <div
+                    className={`project-status ${
+                      project.status === "Open"
+                        ? "open"
+                        : project.status === "Completed"
+                        ? "completed"
+                        : "active"
+                    }`}
+                  >
+                    {project.status}
+                  </div>
 
-            <div>
-              <h3>Content Writing</h3>
+                </div>
 
-              <p>
-                Articles and website content for a new business.
-              </p>
+              ))
 
-              <span>Budget: ₹8,000</span>
-            </div>
-
-            <div className="project-status completed">
-              Completed
-            </div>
+            )}
 
           </div>
 

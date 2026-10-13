@@ -1,100 +1,245 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import DashboardNavbar from "../components/DashboardNavbar";
 import "../App.css";
 
 function FreelancerDashboard() {
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
+
+  const [proposals, setProposals] = useState([]);
+
+  useEffect(() => {
+    fetchProposals();
+  }, []);
+
+  const fetchProposals = async () => {
+
+    try {
+
+      const response = await fetch(
+  `http://localhost:5000/api/proposals/freelancer/${user.id}`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
+
+const data = await response.json();
+
+if (response.ok) {
+  setProposals(data);
+} else {
+  console.log("Failed to fetch proposals:", data.message);
+  setProposals([]);
+}
+
+    } catch (error) {
+
+      console.log("Error fetching proposals:", error);
+
+    }
+  };
+
+
+  const pendingProposals = proposals.filter(
+    (proposal) => proposal.status === "Pending"
+  ).length;
+
+
+  const activeProjects = proposals.filter(
+    (proposal) =>
+      proposal.status === "Accepted" &&
+      proposal.project?.status === "In Progress"
+  ).length;
+
+
+  const completedProjects = proposals.filter(
+    (proposal) =>
+      proposal.status === "Accepted" &&
+      proposal.project?.status === "Completed"
+  ).length;
+
+
   return (
-    <div className="dashboard-page">
+    <div>
 
-      <div className="dashboard-header">
-        <div>
-          <h1>Welcome, Freelancer!</h1>
-          <p>Find projects that match your skills and experience.</p>
-        </div>
+      {/* Dashboard Navigation */}
 
-        <Link to="/browse-projects" className="primary-btn">
-  Browse Projects
-</Link>
-      </div>
+      <DashboardNavbar role="freelancer" />
 
-      <div className="stats-container">
 
-        <div className="stat-card">
-          <h2>12</h2>
-          <p>Projects Applied</p>
-        </div>
+      <div className="dashboard-page">
 
-        <div className="stat-card">
-          <h2>3</h2>
-          <p>Active Projects</p>
-        </div>
 
-        <div className="stat-card">
-          <h2>5</h2>
-          <p>Pending Proposals</p>
-        </div>
+        {/* Header */}
 
-        <div className="stat-card">
-          <h2>4</h2>
-          <p>Completed Projects</p>
-        </div>
+        <div className="dashboard-header">
 
-      </div>
+          <div>
 
-      <div className="projects-section">
+            <h1>
+              Welcome, {user?.name}!
+            </h1>
 
-        <div className="section-heading">
-          <h2>Recent Projects</h2>
+            <p>
+              Find projects that match your skills and experience.
+            </p>
 
-          <Link to="#">
-            View All
+          </div>
+
+
+          <Link
+            to="/browse-projects"
+            className="primary-btn"
+          >
+            Browse Projects
           </Link>
-        </div>
-
-        <div className="project-list">
-
-          <div className="project-card">
-            <div>
-              <h3>E-Commerce Website</h3>
-              <p>
-                Looking for a developer to build a responsive online store.
-              </p>
-              <span>Budget: ₹30,000</span>
-            </div>
-
-            <div className="project-status open">
-              Open
-            </div>
-          </div>
-
-          <div className="project-card">
-            <div>
-              <h3>Mobile App UI Design</h3>
-              <p>
-                Need a UI/UX designer for a mobile application.
-              </p>
-              <span>Budget: ₹18,000</span>
-            </div>
-
-            <div className="project-status active">
-              Applied
-            </div>
-          </div>
-
-          <div className="project-card">
-            <div>
-              <h3>Python Data Analysis</h3>
-              <p>
-                Analyze and visualize business data using Python.
-              </p>
-              <span>Budget: ₹12,000</span>
-            </div>
-
-            <div className="project-status completed">
-              Completed
-            </div>
-          </div>
 
         </div>
+
+
+        {/* Statistics */}
+
+        <div className="stats-container">
+
+
+          <div className="stat-card">
+
+            <h2>
+              {proposals.length}
+            </h2>
+
+            <p>
+              Projects Applied
+            </p>
+
+          </div>
+
+
+          <div className="stat-card">
+
+            <h2>
+              {activeProjects}
+            </h2>
+
+            <p>
+              Active Projects
+            </p>
+
+          </div>
+
+
+          <div className="stat-card">
+
+            <h2>
+              {pendingProposals}
+            </h2>
+
+            <p>
+              Pending Proposals
+            </p>
+
+          </div>
+
+
+          <div className="stat-card">
+
+            <h2>
+              {completedProjects}
+            </h2>
+
+            <p>
+              Completed Projects
+            </p>
+
+          </div>
+
+
+        </div>
+
+
+        {/* Recent Projects */}
+
+        <div className="projects-section">
+
+
+          <div className="section-heading">
+
+            <h2>
+              Recent Projects
+            </h2>
+
+
+            <Link to="/browse-projects">
+              View All
+            </Link>
+
+          </div>
+
+
+          <div className="project-list">
+
+
+            {proposals.length === 0 ? (
+
+              <p>
+                You haven't applied to any projects yet.
+              </p>
+
+            ) : (
+
+              proposals.slice(0, 3).map((proposal) => (
+
+                <div
+                  className="project-card"
+                  key={proposal._id}
+                >
+
+                  <div>
+
+                    <h3>
+                      {proposal.project?.title}
+                    </h3>
+
+
+                    <p>
+                      Your proposal for this project.
+                    </p>
+
+
+                    <span>
+                      Budget: ₹{proposal.project?.budget}
+                    </span>
+
+                  </div>
+
+
+                  <div
+                    className={`project-status ${
+                      proposal.status === "Accepted"
+                        ? "active"
+                        : proposal.status === "Rejected"
+                        ? "completed"
+                        : "open"
+                    }`}
+                  >
+                    {proposal.status}
+                  </div>
+
+
+                </div>
+
+              ))
+
+            )}
+
+          </div>
+
+        </div>
+
 
       </div>
 
