@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema(
@@ -36,6 +37,12 @@ const reviewSchema = new mongoose.Schema(
   {
     timestamps: true
   }
+);
+
+// Prevent the same user from reviewing the same project twice
+reviewSchema.index(
+  { project: 1, reviewer: 1 },
+  { unique: true }
 );
 
 module.exports = mongoose.model("Review", reviewSchema);

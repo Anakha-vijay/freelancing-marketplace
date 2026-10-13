@@ -17,22 +17,26 @@ function Messages() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const token = localStorage.getItem("token");
 
-  // Load accepted projects for the Messages inbox
+  // Load accepted projects for clients and freelancers
   const fetchConversations = async () => {
     try {
-      if (!user?.id || !token) {
+      if (!(user?.id || user?._id) || !token) {
         setProjects([]);
         return;
       }
 
-      const response = await fetch(
-        `http://localhost:5000/api/proposals/freelancer/${user.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      const userId = user.id || user._id;
+
+      const endpoint =
+        user.role === "client"
+          ? `http://localhost:5000/api/proposals/client/${userId}/accepted`
+          : `http://localhost:5000/api/proposals/freelancer/${userId}`;
+
+      const response = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      );
+      });
 
       const data = await response.json();
 
@@ -45,7 +49,6 @@ function Messages() {
           )
           .map((proposal) => proposal.project);
 
-        // Avoid showing the same project more than once
         const uniqueProjects = acceptedProjects.filter(
           (project, index, array) =>
             array.findIndex(
@@ -55,7 +58,10 @@ function Messages() {
 
         setProjects(uniqueProjects);
       } else {
-        console.log("Failed to load conversations:", data.message);
+        console.log(
+          "Failed to load conversations:",
+          data.message
+        );
         setProjects([]);
       }
     } catch (error) {
@@ -66,7 +72,7 @@ function Messages() {
     }
   };
 
-  // Find the project and the other person in the chat
+  // Find the selected project and the other participant
   const fetchProject = async () => {
     try {
       const response = await fetch(
@@ -100,8 +106,12 @@ function Messages() {
 
       if (String(currentUserId) === String(clientId)) {
         setReceiverId(freelancerId || null);
-      } else {
+      } else if (
+        String(currentUserId) === String(freelancerId)
+      ) {
         setReceiverId(clientId || null);
+      } else {
+        setReceiverId(null);
       }
     } catch (error) {
       console.log("Error fetching project:", error);
@@ -141,6 +151,7 @@ function Messages() {
     } else {
       setMessages([]);
       setReceiverId(null);
+      setLoading(true);
       fetchConversations();
     }
   }, [id]);
@@ -151,7 +162,7 @@ function Messages() {
 
     if (!newMessage.trim()) return;
 
-    if (!user?.id || !token) {
+    if (!(user?.id || user?._id) || !token) {
       alert("Please log in again to send messages.");
       return;
     }
@@ -173,7 +184,6 @@ function Messages() {
             Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
-            sender: user.id,
             receiver: receiverId,
             project: id,
             message: newMessage.trim()
@@ -225,8 +235,8 @@ function Messages() {
               <p>Loading your conversations...</p>
             ) : projects.length === 0 ? (
               <p>
-                No accepted projects yet. Once a client accepts
-                your proposal, the project will appear here.
+                No accepted projects yet. Once a proposal is
+                accepted, the project will appear here.
               </p>
             ) : (
               <div className="project-list">
@@ -289,7 +299,10 @@ function Messages() {
               )}
             </div>
 
-            <form className="message-form" onSubmit={sendMessage}>
+            <form
+              className="message-form"
+              onSubmit={sendMessage}
+            >
               <input
                 type="text"
                 placeholder="Type your message..."

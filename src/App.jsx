@@ -16,6 +16,7 @@ import Messages from "./pages/Messages";
 import MyApplications from "./pages/MyApplications";
 import Profile from "./pages/Profile";
 import Reviews from "./pages/Reviews";
+import { Link } from "react-router-dom";
 
 function App() {
   return (
@@ -80,6 +81,16 @@ function App() {
         />
         <Route path="/profile" element={<Profile />} />
         <Route path="/reviews/:id" element={<Reviews />} />
+        <Route
+          path="*"
+          element={
+           <div style={{ padding: "40px", textAlign: "center" }}>
+             <h1>404 - Page Not Found</h1>
+           <p>The page you're looking for doesn't exist.</p>
+           <Link to="/">Go back home</Link>
+          </div>
+  }
+/>
         
 
       </Routes>

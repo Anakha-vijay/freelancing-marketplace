@@ -10,8 +10,8 @@ function Reviews() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [project, setProject] = useState(null);
-  const [revieweeId, setRevieweeId] = useState(null);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
@@ -24,27 +24,15 @@ function Reviews() {
 
       const projects = await response.json();
 
+      if (!response.ok) {
+        throw new Error("Failed to fetch projects");
+      }
+
       const currentProject = projects.find(
-        (project) => project._id === id
+        (item) => String(item._id) === String(id)
       );
 
-      if (!currentProject) return;
-
-      setProject(currentProject);
-
-      // Client reviews the selected freelancer
-      if (user?.id === currentProject.client?._id) {
-        setRevieweeId(
-          currentProject.selectedFreelancer?._id
-        );
-      }
-
-      // Freelancer reviews the client
-      else {
-        setRevieweeId(
-          currentProject.client?._id
-        );
-      }
+      setProject(currentProject || null);
     } catch (error) {
       console.log("Error fetching project:", error);
     }
@@ -70,13 +58,17 @@ function Reviews() {
           (review) =>
             String(
               review.reviewer?._id || review.reviewer
-            ) === String(user?.id)
+            ) === String(user?.id || user?._id)
         );
 
         setHasReviewed(alreadyReviewed);
+      } else {
+        console.log("Failed to fetch reviews:", data.message);
       }
     } catch (error) {
       console.log("Error fetching reviews:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,6 +80,11 @@ function Reviews() {
   const submitReview = async (e) => {
     e.preventDefault();
 
+    if (!user || !token) {
+      alert("Please log in to submit a review.");
+      return;
+    }
+
     if (hasReviewed) {
       alert("You have already reviewed this project.");
       return;
@@ -98,8 +95,8 @@ function Reviews() {
       return;
     }
 
-    if (!revieweeId) {
-      alert("No review recipient found for this project.");
+    if (!project) {
+      alert("Project details could not be loaded. Please refresh.");
       return;
     }
 
@@ -114,8 +111,6 @@ function Reviews() {
           },
           body: JSON.stringify({
             project: id,
-            reviewer: user.id,
-            reviewee: revieweeId,
             rating: Number(rating),
             comment: comment.trim()
           })
@@ -126,10 +121,8 @@ function Reviews() {
 
       if (response.ok) {
         alert("Review added successfully!");
-
         setComment("");
         setRating(5);
-
         await fetchReviews();
       } else {
         alert(data.message || "Failed to submit review.");
@@ -139,6 +132,14 @@ function Reviews() {
       alert("Unable to submit review. Please try again.");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="dashboard-page">
+        <p>Loading reviews...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page">
@@ -165,8 +166,7 @@ function Reviews() {
           <p>
             You have already submitted a review for this project.
           </p>
-        ) : project?.selectedFreelancer ||
-          project?.status === "Completed" ? (
+        ) : project?.status === "Completed" ? (
           <form onSubmit={submitReview}>
             <div className="project-detail-section">
               <h3>Rating</h3>
@@ -194,16 +194,13 @@ function Reviews() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="primary-btn"
-            >
+            <button type="submit" className="primary-btn">
               Submit Review
             </button>
           </form>
         ) : (
           <p>
-            A freelancer must be selected before leaving a review.
+            Reviews can be submitted after the project is completed.
           </p>
         )}
 

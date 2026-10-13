@@ -34,6 +34,13 @@ router.post("/", authMiddleware, async (req, res) => {
 
     // Find the project
     const projectData = await Project.findById(project);
+    console.log("REVIEW DEBUG:", {
+  projectId: projectData?._id,
+  clientId: projectData?.client?.toString(),
+  selectedFreelancerId: projectData?.selectedFreelancer?.toString(),
+  reviewerId: req.user.id,
+  projectStatus: projectData?.status
+});
 
     if (!projectData) {
       return res.status(404).json({

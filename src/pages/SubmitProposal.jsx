@@ -1,3 +1,4 @@
+
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import "../App.css";
@@ -13,6 +14,7 @@ function SubmitProposal() {
   });
 
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -24,9 +26,28 @@ function SubmitProposal() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const user = JSON.parse(
-      localStorage.getItem("user")
-    );
+    if (submitting) return;
+
+    if (
+      !formData.coverLetter.trim() ||
+      Number(formData.bidAmount) <= 0 ||
+      !Number.isFinite(Number(formData.bidAmount)) ||
+      !Number.isInteger(Number(formData.deliveryTime)) ||
+      Number(formData.deliveryTime) <= 0
+    ) {
+      setMessage(
+        "Enter a cover letter, a positive bid amount, and delivery time in whole days."
+      );
+      return;
+    }
+
+    let user;
+
+    try {
+      user = JSON.parse(localStorage.getItem("user"));
+    } catch {
+      user = null;
+    }
 
     const token = localStorage.getItem("token");
 
@@ -35,20 +56,21 @@ function SubmitProposal() {
       return;
     }
 
+    setSubmitting(true);
+    setMessage("");
+
     try {
       const response = await fetch(
         "http://localhost:5000/api/proposals",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-
           body: JSON.stringify({
             project: id,
-            coverLetter: formData.coverLetter,
+            coverLetter: formData.coverLetter.trim(),
             bidAmount: Number(formData.bidAmount),
             deliveryTime: Number(formData.deliveryTime)
           })
@@ -62,28 +84,22 @@ function SubmitProposal() {
         return;
       }
 
-      setMessage(
-        "Proposal submitted successfully!"
-      );
+      setMessage("Proposal submitted successfully!");
 
       setTimeout(() => {
         navigate("/my-applications");
       }, 1000);
-
     } catch (error) {
       console.error("PROPOSAL ERROR:", error);
-
-      setMessage(
-        "Unable to connect to the server."
-      );
+      setMessage("Unable to connect to the server.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="auth-page">
-
       <div className="auth-box proposal-box">
-
         <h1>Submit Proposal</h1>
 
         <p>
@@ -92,7 +108,6 @@ function SubmitProposal() {
         </p>
 
         <form onSubmit={handleSubmit}>
-
           <label>Cover Letter</label>
 
           <textarea
@@ -102,7 +117,7 @@ function SubmitProposal() {
             value={formData.coverLetter}
             onChange={handleChange}
             required
-          ></textarea>
+          />
 
           <label>Bid Amount</label>
 
@@ -110,6 +125,8 @@ function SubmitProposal() {
             type="number"
             name="bidAmount"
             placeholder="Enter your bid amount"
+            min="0.01"
+            step="any"
             value={formData.bidAmount}
             onChange={handleChange}
             required
@@ -121,6 +138,8 @@ function SubmitProposal() {
             type="number"
             name="deliveryTime"
             placeholder="Example: 10"
+            min="1"
+            step="1"
             value={formData.deliveryTime}
             onChange={handleChange}
             required
@@ -129,28 +148,24 @@ function SubmitProposal() {
           <button
             type="submit"
             className="primary-btn"
+            disabled={submitting}
           >
-            Submit Proposal
+            {submitting ? "Submitting..." : "Submit Proposal"}
           </button>
-
         </form>
 
         {message && (
-          <p className="auth-message">
+          <p className="auth-message" role="status">
             {message}
           </p>
         )}
 
         <p className="auth-link">
-
           <Link to={`/project-details/${id}`}>
             ← Back to Project
           </Link>
-
         </p>
-
       </div>
-
     </div>
   );
 }

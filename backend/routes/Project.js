@@ -1,9 +1,19 @@
+
 const express = require("express");
+const mongoose = require("mongoose");
 const Project = require("../models/Project");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+const stages = [
+  "Requirements",
+  "Design",
+  "Development",
+  "Testing",
+  "Deployment",
+  "Completed"
+];
 
 // Create a new project
 router.post("/", authMiddleware, async (req, res) => {
@@ -16,34 +26,67 @@ router.post("/", authMiddleware, async (req, res) => {
       deadline
     } = req.body;
 
-    const client = req.user.id;
+    // Validate required fields
+    if (
+      typeof title !== "string" ||
+      !title.trim() ||
+      typeof description !== "string" ||
+      !description.trim() ||
+      typeof skills !== "string" ||
+      !skills.trim() ||
+      budget === undefined ||
+      budget === null ||
+      budget === "" ||
+      !deadline
+    ) {
+      return res.status(400).json({
+        message: "Please provide a title, description, skills, budget, and deadline."
+      });
+    }
 
+    // Validate budget
+    const numericBudget = Number(budget);
+
+    if (!Number.isFinite(numericBudget) || numericBudget <= 0) {
+      return res.status(400).json({
+        message: "Budget must be greater than zero."
+      });
+    }
+
+    // Validate deadline
+    const parsedDeadline = new Date(deadline);
+
+    if (Number.isNaN(parsedDeadline.getTime())) {
+      return res.status(400).json({
+        message: "Please provide a valid deadline."
+      });
+    }
+
+    // Create project
     const project = new Project({
-      title,
-      description,
-      skills,
-      budget,
-      deadline,
-      client
+      title: title.trim(),
+      description: description.trim(),
+      skills: skills.trim(),
+      budget: numericBudget,
+      deadline: parsedDeadline,
+      client: req.user.id
     });
 
     await project.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Project created successfully",
       project
     });
-
   } catch (error) {
-    console.log("PROJECT ERROR:", error);
+    console.error("PROJECT ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Project creation failed",
       error: error.message
     });
   }
 });
-
 
 // Get all projects
 router.get("/", async (req, res) => {
@@ -52,16 +95,16 @@ router.get("/", async (req, res) => {
       .populate("client", "name email")
       .populate("selectedFreelancer", "name email");
 
-    res.json(projects);
-
+    return res.json(projects);
   } catch (error) {
-    res.status(500).json({
+    console.error("FETCH PROJECTS ERROR:", error);
+
+    return res.status(500).json({
       message: "Failed to fetch projects",
       error: error.message
     });
   }
 });
-
 
 // Update project progress
 router.put(
@@ -69,21 +112,41 @@ router.put(
   authMiddleware,
   async (req, res) => {
     try {
-
       const { progress, currentStage } = req.body;
+
+      if (!mongoose.isValidObjectId(req.params.projectId)) {
+        return res.status(400).json({
+          message: "Invalid project ID."
+        });
+      }
+
+      if (
+        !Number.isInteger(progress) ||
+        progress < 0 ||
+        progress > 100
+      ) {
+        return res.status(400).json({
+          message: "Progress must be a whole number between 0 and 100."
+        });
+      }
+
+      if (!stages.includes(currentStage)) {
+        return res.status(400).json({
+          message: "Please provide a valid project stage."
+        });
+      }
 
       const project = await Project.findById(
         req.params.projectId
       );
 
-      // Check if project exists
       if (!project) {
         return res.status(404).json({
-          message: "Project not found"
+          message: "Project not found."
         });
       }
 
-      // Only client or selected freelancer can update progress
+      // Only the client or selected freelancer can update progress
       if (
         project.client.toString() !== req.user.id &&
         (
@@ -92,40 +155,51 @@ router.put(
         )
       ) {
         return res.status(403).json({
-          message: "You are not authorized to update this project"
+          message: "You are not authorized to update this project."
         });
       }
 
-      // Update progress and stage
-      project.progress = progress;
-      project.currentStage = currentStage;
+      // Only active projects can be updated
+      if (
+        project.status !== "In Progress" &&
+        !(project.status === "Completed" && progress === 100)
+      ) {
+        return res.status(400).json({
+          message: "Only active projects can have their progress updated."
+        });
+      }
 
-      // Mark project as completed at 100%
+      project.progress = progress;
+
       if (progress === 100) {
         project.status = "Completed";
         project.currentStage = "Completed";
       } else {
+        if (currentStage === "Completed") {
+          return res.status(400).json({
+            message: "The Completed stage requires 100% progress."
+          });
+        }
+
         project.status = "In Progress";
+        project.currentStage = currentStage;
       }
 
       await project.save();
 
-      res.json({
+      return res.json({
         message: "Project progress updated successfully",
         project
       });
-
     } catch (error) {
+      console.error("PROGRESS UPDATE ERROR:", error);
 
-      console.log("PROGRESS UPDATE ERROR:", error);
-
-      res.status(500).json({
+      return res.status(500).json({
         message: "Failed to update project progress",
         error: error.message
       });
     }
   }
 );
-
 
 module.exports = router;
