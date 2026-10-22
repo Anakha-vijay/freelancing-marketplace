@@ -78,7 +78,7 @@ function Messages() {
   const fetchProject = async () => {
     try {
       const response = await fetch(
-        "${API_BASE_URL}/api/projects"
+        `${API_BASE_URL}/api/projects`
       );
 
       const data = await response.json();
@@ -178,7 +178,7 @@ function Messages() {
 
     try {
       const response = await fetch(
-        "${API_BASE_URL}/api/messages",
+        `${API_BASE_URL}/api/messages`,
         {
           method: "POST",
           headers: {

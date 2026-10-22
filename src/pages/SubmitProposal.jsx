@@ -63,7 +63,7 @@ function SubmitProposal() {
 
     try {
       const response = await fetch(
-        "${API_BASE_URL}/api/proposals",
+        `${API_BASE_URL}/api/proposals`,
         {
           method: "POST",
           headers: {

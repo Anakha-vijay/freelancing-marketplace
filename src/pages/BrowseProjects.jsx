@@ -21,7 +21,7 @@ function BrowseProjects() {
     try {
 
       const response = await fetch(
-        "${API_BASE_URL}/api/projects"
+        `${API_BASE_URL}/api/projects`
       );
 
       const data = await response.json();

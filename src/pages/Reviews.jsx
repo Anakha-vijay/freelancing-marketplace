@@ -21,7 +21,7 @@ function Reviews() {
   const fetchProject = async () => {
     try {
       const response = await fetch(
-        "${API_BASE_URL}/api/projects"
+        `${API_BASE_URL}/api/projects`
       );
 
       const projects = await response.json();
@@ -104,7 +104,7 @@ function Reviews() {
 
     try {
       const response = await fetch(
-        "${API_BASE_URL}/api/reviews",
+        `${API_BASE_URL}/api/reviews`,
         {
           method: "POST",
           headers: {

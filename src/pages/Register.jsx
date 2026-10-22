@@ -29,7 +29,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "${API_BASE_URL}/api/auth/register",
+        `${API_BASE_URL}/api/auth/register`,
         {
           method: "POST",
           headers: {
