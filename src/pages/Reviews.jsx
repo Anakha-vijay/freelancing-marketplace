@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -19,7 +21,7 @@ function Reviews() {
   const fetchProject = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/projects"
+        "${API_BASE_URL}/api/projects"
       );
 
       const projects = await response.json();
@@ -41,7 +43,7 @@ function Reviews() {
   const fetchReviews = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/reviews/${id}`,
+        `${API_BASE_URL}/api/reviews/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -102,7 +104,7 @@ function Reviews() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/reviews",
+        "${API_BASE_URL}/api/reviews",
         {
           method: "POST",
           headers: {

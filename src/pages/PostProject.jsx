@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "../App.css";
@@ -35,7 +37,7 @@ function PostProject() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/projects",
+        "${API_BASE_URL}/api/projects",
         {
           method: "POST",
           headers: {

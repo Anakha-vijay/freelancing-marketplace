@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -29,8 +31,8 @@ function Messages() {
 
       const endpoint =
         user.role === "client"
-          ? `http://localhost:5000/api/proposals/client/${userId}/accepted`
-          : `http://localhost:5000/api/proposals/freelancer/${userId}`;
+          ? `${API_BASE_URL}/api/proposals/client/${userId}/accepted`
+          : `${API_BASE_URL}/api/proposals/freelancer/${userId}`;
 
       const response = await fetch(endpoint, {
         headers: {
@@ -76,7 +78,7 @@ function Messages() {
   const fetchProject = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/projects"
+        "${API_BASE_URL}/api/projects"
       );
 
       const data = await response.json();
@@ -122,7 +124,7 @@ function Messages() {
   const fetchMessages = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/messages/${id}`,
+        `${API_BASE_URL}/api/messages/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -176,7 +178,7 @@ function Messages() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/messages",
+        "${API_BASE_URL}/api/messages",
         {
           method: "POST",
           headers: {

@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
@@ -61,7 +63,7 @@ function SubmitProposal() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/proposals",
+        "${API_BASE_URL}/api/proposals",
         {
           method: "POST",
           headers: {

@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
@@ -20,7 +22,7 @@ function ClientDashboard() {
     try {
 
       const response = await fetch(
-        "http://localhost:5000/api/projects"
+        "${API_BASE_URL}/api/projects"
       );
 
       const data = await response.json();
@@ -43,7 +45,7 @@ function ClientDashboard() {
   const fetchProposalCount = async () => {
   try {
     const response = await fetch(
-      `http://localhost:5000/api/proposals/client/${user.id}`
+      `${API_BASE_URL}/api/proposals/client/${user.id}`
     );
 
     const data = await response.json();

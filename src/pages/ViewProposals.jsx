@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../App.css";
@@ -31,7 +33,7 @@ function ViewProposals() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/proposals/project/${projectId}`,
+        `${API_BASE_URL}/api/proposals/project/${projectId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -142,7 +144,7 @@ function ViewProposals() {
                       try {
 
                         const response = await fetch(
-                          `http://localhost:5000/api/proposals/${proposal._id}/accept`,
+                          `${API_BASE_URL}/api/proposals/${proposal._id}/accept`,
                           {
                             method: "PUT",
 

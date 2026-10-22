@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardNavbar from "../components/DashboardNavbar";
@@ -19,7 +21,7 @@ function FreelancerDashboard() {
     try {
 
       const response = await fetch(
-  `http://localhost:5000/api/proposals/freelancer/${user.id}`,
+  `${API_BASE_URL}/api/proposals/freelancer/${user.id}`,
   {
     headers: {
       Authorization: `Bearer ${token}`

@@ -1,3 +1,5 @@
+import API_BASE_URL from "../api";
+
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../App.css";
@@ -11,7 +13,7 @@ function ProjectManagement() {
   const fetchProject = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/projects"
+        "${API_BASE_URL}/api/projects"
       );
 
       const data = await response.json();
@@ -38,7 +40,7 @@ function ProjectManagement() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/api/projects/${id}/progress`,
+        `${API_BASE_URL}/api/projects/${id}/progress`,
         {
           method: "PUT",
 
